@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Bar, Line, Pie } from "recharts";
 import { 
@@ -26,6 +27,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 // Types for API data
 interface EndpointStatus {
@@ -72,120 +74,79 @@ interface ResponseTimes {
   timestamp: string;
 }
 
-const ApiMonitoring = () => {
-  const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null);
-  const [methodStats, setMethodStats] = useState<MethodStats | null>(null);
-  const [responseTimes, setResponseTimes] = useState<ResponseTimes | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
+// Custom hook to fetch monitoring data
+const useMonitoringData = (autoRefresh: boolean) => {
+  // Fetch API status
+  const statusQuery = useQuery({
+    queryKey: ['apiStatus', autoRefresh],
+    queryFn: async () => {
+      const response = await fetch('/api/monitoring/status');
+      if (!response.ok) {
+        throw new Error('Failed to fetch API status');
+      }
+      return response.json() as Promise<ApiStatus>;
+    },
+    refetchInterval: autoRefresh ? 10000 : false,
+    retry: 1,
+    staleTime: 5000,
+  });
 
-  // Function to fetch all monitoring data
-  const fetchMonitoringData = async () => {
-    setLoading(true);
-    try {
-      // In a real app, these would be actual API calls
-      // For demo purposes, we'll simulate the responses
-      
-      // Mock API status data
-      const statusData: ApiStatus = {
-        endpoints: [
-          { path: "/api/users", status: "healthy", responseTime: 45, uptime: 99.8 },
-          { path: "/api/products", status: "healthy", responseTime: 38, uptime: 99.9 },
-          { path: "/api/auth/login", status: "healthy", responseTime: 120, uptime: 99.5 },
-          { path: "/api/auth/register", status: "degraded", responseTime: 350, uptime: 98.2 }
-        ],
-        overallHealth: "healthy",
-        timestamp: new Date().toISOString()
-      };
-      
-      // Mock HTTP method statistics
-      const methodData: MethodStats = {
-        methods: [
-          { method: "GET", count: 15420, avgResponseTime: 42, errorRate: 0.8 },
-          { method: "POST", count: 5280, avgResponseTime: 128, errorRate: 2.1 },
-          { method: "PUT", count: 2340, avgResponseTime: 95, errorRate: 1.5 },
-          { method: "DELETE", count: 890, avgResponseTime: 65, errorRate: 0.9 }
-        ],
-        totalRequests: 23930,
-        period: "last 24 hours",
-        timestamp: new Date().toISOString()
-      };
-      
-      // Mock response time data
-      const responseTimeData: ResponseTimes = {
-        average: 78,
-        median: 65,
-        p95: 210,
-        p99: 450,
-        byEndpoint: [
-          { path: "/api/users", avg: 45, median: 42, p95: 120 },
-          { path: "/api/products", avg: 38, median: 35, p95: 95 },
-          { path: "/api/auth/login", avg: 120, median: 110, p95: 320 },
-          { path: "/api/auth/register", avg: 350, median: 310, p95: 620 }
-        ],
-        period: "last 24 hours",
-        timestamp: new Date().toISOString()
-      };
+  // Fetch method stats
+  const methodsQuery = useQuery({
+    queryKey: ['methodStats', autoRefresh],
+    queryFn: async () => {
+      const response = await fetch('/api/monitoring/methods');
+      if (!response.ok) {
+        throw new Error('Failed to fetch method stats');
+      }
+      return response.json() as Promise<MethodStats>;
+    },
+    refetchInterval: autoRefresh ? 10000 : false,
+    retry: 1,
+    staleTime: 5000,
+  });
 
-      setApiStatus(statusData);
-      setMethodStats(methodData);
-      setResponseTimes(responseTimeData);
-      setLastUpdated(new Date());
-      
-      // Removed toast notification on data refresh
-    } catch (error) {
-      console.error("Error fetching monitoring data:", error);
-      toast({
-        title: "Error refreshing data",
-        description: "Could not fetch monitoring data. Please try again.",
-        variant: "destructive",
-        duration: 4000,
-      });
-    } finally {
-      setLoading(false);
+  // Fetch response times
+  const responseTimesQuery = useQuery({
+    queryKey: ['responseTimes', autoRefresh],
+    queryFn: async () => {
+      const response = await fetch('/api/monitoring/response-times');
+      if (!response.ok) {
+        throw new Error('Failed to fetch response times');
+      }
+      return response.json() as Promise<ResponseTimes>;
+    },
+    refetchInterval: autoRefresh ? 10000 : false,
+    retry: 1,
+    staleTime: 5000,
+  });
+
+  return {
+    apiStatus: statusQuery.data,
+    methodStats: methodsQuery.data,
+    responseTimes: responseTimesQuery.data,
+    isLoading: statusQuery.isLoading || methodsQuery.isLoading || responseTimesQuery.isLoading,
+    refetch: () => {
+      statusQuery.refetch();
+      methodsQuery.refetch();
+      responseTimesQuery.refetch();
     }
   };
+};
 
-  // Simulate WebSocket connection for real-time updates
+const ApiMonitoring = () => {
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  
+  // Use our custom hook for data fetching
+  const { apiStatus, methodStats, responseTimes, isLoading, refetch } = useMonitoringData(autoRefresh);
+
+  // Update the last updated timestamp whenever we get new data
   useEffect(() => {
-    fetchMonitoringData();
-    
-    // Only set up interval if autoRefresh is enabled
-    let interval: NodeJS.Timeout | undefined;
-    
-    if (autoRefresh) {
-      interval = setInterval(() => {
-        if (apiStatus) {
-          const updatedEndpoints = apiStatus.endpoints.map(endpoint => ({
-            ...endpoint,
-            responseTime: endpoint.responseTime + (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 10)
-          }));
-          
-          setApiStatus({
-            ...apiStatus,
-            endpoints: updatedEndpoints,
-            timestamp: new Date().toISOString()
-          });
-        }
-        
-        if (responseTimes) {
-          const newAvg = responseTimes.average + (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 5);
-          setResponseTimes({
-            ...responseTimes,
-            average: newAvg,
-            timestamp: new Date().toISOString()
-          });
-        }
-        
-        setLastUpdated(new Date());
-      }, 10000);
+    if (apiStatus || methodStats || responseTimes) {
+      setLastUpdated(new Date());
     }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [apiStatus, responseTimes, autoRefresh]);
+  }, [apiStatus, methodStats, responseTimes]);
 
   // Method colors for charts
   const methodColors = {
@@ -220,10 +181,10 @@ const ApiMonitoring = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={fetchMonitoringData}
-              disabled={loading}
+              onClick={() => refetch()}
+              disabled={isLoading}
             >
-              {loading ? (
+              {isLoading ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
               ) : (
                 <RefreshCw className="h-4 w-4" />
@@ -247,7 +208,7 @@ const ApiMonitoring = () => {
               <CardTitle className="text-lg font-medium">API Health</CardTitle>
             </CardHeader>
             <CardContent>
-              {apiStatus && (
+              {apiStatus ? (
                 <div className="flex flex-col items-center">
                   <div className={`text-2xl font-bold mb-2 ${
                     apiStatus.overallHealth === "healthy" 
@@ -267,6 +228,13 @@ const ApiMonitoring = () => {
                     {apiStatus.endpoints.filter(e => e.status === "healthy").length} of {apiStatus.endpoints.length} endpoints healthy
                   </p>
                 </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div className="text-2xl font-bold mb-2 text-gray-400">
+                    <Clock className="h-8 w-8 inline mr-2" />
+                    Loading...
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -277,15 +245,22 @@ const ApiMonitoring = () => {
               <CardTitle className="text-lg font-medium">Avg Response Time</CardTitle>
             </CardHeader>
             <CardContent>
-              {responseTimes && (
+              {responseTimes ? (
                 <div className="flex flex-col items-center">
                   <div className="text-2xl font-bold mb-2">
                     <Clock className="h-6 w-6 inline mr-2" />
-                    {responseTimes.average} ms
+                    {Math.round(responseTimes.average)} ms
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    P95: {responseTimes.p95} ms
+                    P95: {Math.round(responseTimes.p95)} ms
                   </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div className="text-2xl font-bold mb-2 text-gray-400">
+                    <Clock className="h-6 w-6 inline mr-2" />
+                    Loading...
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -297,15 +272,22 @@ const ApiMonitoring = () => {
               <CardTitle className="text-lg font-medium">Total Requests</CardTitle>
             </CardHeader>
             <CardContent>
-              {methodStats && (
+              {methodStats ? (
                 <div className="flex flex-col items-center">
                   <div className="text-2xl font-bold mb-2">
                     <Activity className="h-6 w-6 inline mr-2" />
                     {methodStats.totalRequests.toLocaleString()}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    In the last 24 hours
+                    {methodStats.period}
                   </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div className="text-2xl font-bold mb-2 text-gray-400">
+                    <Activity className="h-6 w-6 inline mr-2" />
+                    Loading...
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -317,16 +299,23 @@ const ApiMonitoring = () => {
               <CardTitle className="text-lg font-medium">Error Rate</CardTitle>
             </CardHeader>
             <CardContent>
-              {methodStats && (
+              {methodStats && methodStats.methods.length > 0 ? (
                 <div className="flex flex-col items-center">
                   <div className="text-2xl font-bold mb-2">
                     <AlertTriangle className="h-6 w-6 inline mr-2" />
                     {(methodStats.methods.reduce((sum, method) => sum + method.errorRate * method.count, 0) / 
-                      methodStats.totalRequests).toFixed(2)}%
+                      Math.max(methodStats.totalRequests, 1)).toFixed(2)}%
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Across all endpoints
                   </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div className="text-2xl font-bold mb-2 text-gray-400">
+                    <AlertTriangle className="h-6 w-6 inline mr-2" />
+                    Loading...
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -341,7 +330,7 @@ const ApiMonitoring = () => {
               <CardDescription>Overview of all API endpoints and their current status</CardDescription>
             </CardHeader>
             <CardContent>
-              {apiStatus && (
+              {apiStatus && apiStatus.endpoints.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -377,16 +366,20 @@ const ApiMonitoring = () => {
                                   ? "text-amber-500" 
                                   : "text-red-500"
                             }>
-                              {endpoint.responseTime} ms
+                              {Math.round(endpoint.responseTime)} ms
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            {endpoint.uptime}%
+                            {endpoint.uptime.toFixed(1)}%
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+              ) : (
+                <div className="flex justify-center py-8">
+                  <p className="text-muted-foreground">No endpoint data available{isLoading ? ", loading..." : ""}</p>
                 </div>
               )}
             </CardContent>
@@ -399,7 +392,7 @@ const ApiMonitoring = () => {
               <CardDescription>Distribution of requests by HTTP method</CardDescription>
             </CardHeader>
             <CardContent className="h-80">
-              {methodStats && (
+              {methodStats && methodStats.methods.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -427,6 +420,10 @@ const ApiMonitoring = () => {
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
+              ) : (
+                <div className="flex justify-center items-center h-full">
+                  <p className="text-muted-foreground">No method data available{isLoading ? ", loading..." : ""}</p>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -438,15 +435,15 @@ const ApiMonitoring = () => {
               <CardDescription>Average response times by endpoint (ms)</CardDescription>
             </CardHeader>
             <CardContent className="h-80">
-              {responseTimes && (
+              {responseTimes && responseTimes.byEndpoint.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={responseTimes.byEndpoint.map(endpoint => ({
                       name: endpoint.path.split('/').pop(),
                       path: endpoint.path,
-                      average: endpoint.avg,
-                      median: endpoint.median,
-                      p95: endpoint.p95
+                      average: Math.round(endpoint.avg),
+                      median: Math.round(endpoint.median),
+                      p95: Math.round(endpoint.p95)
                     }))}
                     margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
                   >
@@ -460,6 +457,10 @@ const ApiMonitoring = () => {
                     <Bar dataKey="p95" name="95th Percentile" fill="#f59e0b" />
                   </BarChart>
                 </ResponsiveContainer>
+              ) : (
+                <div className="flex justify-center items-center h-full">
+                  <p className="text-muted-foreground">No response time data available{isLoading ? ", loading..." : ""}</p>
+                </div>
               )}
             </CardContent>
           </Card>
