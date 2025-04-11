@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const routes = require('./routes');
 
 const app = express();
 const PORT = 3001;
@@ -23,8 +24,6 @@ const products = [
   { id: 4, name: 'Keyboard', price: 89.99, category: 'Accessories' },
 ];
 
-// API Routes
-
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
@@ -40,12 +39,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// GET all users
+// Register all routes from our route structure
+// Users routes
 app.get('/api/users', (req, res) => {
   res.json(users);
 });
 
-// GET user by ID
 app.get('/api/users/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const user = users.find(user => user.id === id);
@@ -57,7 +56,6 @@ app.get('/api/users/:id', (req, res) => {
   res.json(user);
 });
 
-// POST create new user
 app.post('/api/users', (req, res) => {
   const { name, email, role } = req.body;
   
@@ -78,7 +76,6 @@ app.post('/api/users', (req, res) => {
   res.status(201).json(newUser);
 });
 
-// PUT update user
 app.put('/api/users/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const userIndex = users.findIndex(user => user.id === id);
@@ -99,7 +96,6 @@ app.put('/api/users/:id', (req, res) => {
   res.json(users[userIndex]);
 });
 
-// DELETE user
 app.delete('/api/users/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const userIndex = users.findIndex(user => user.id === id);
@@ -112,12 +108,11 @@ app.delete('/api/users/:id', (req, res) => {
   res.json(deletedUser);
 });
 
-// GET all products
+// Products routes
 app.get('/api/products', (req, res) => {
   res.json(products);
 });
 
-// GET product by ID
 app.get('/api/products/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const product = products.find(product => product.id === id);
@@ -129,7 +124,7 @@ app.get('/api/products/:id', (req, res) => {
   res.json(product);
 });
 
-// POST login
+// Auth routes
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
   
