@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import ApiEndpoints from "@/components/ApiEndpoints";
 import ApiPlayground from "@/components/ApiPlayground";
+import ApiMonitoring from "@/components/ApiMonitoring";
 import Documentation from "@/components/Documentation";
 import Footer from "@/components/Footer";
 
@@ -32,10 +33,13 @@ const Index = () => {
           <section id="endpoints" className="py-16 bg-background">
             <ApiEndpoints />
           </section>
-          <section id="documentation" className="py-16 bg-muted">
+          <section id="monitoring" className="py-16 bg-muted">
+            <ApiMonitoring />
+          </section>
+          <section id="documentation" className="py-16 bg-background">
             <Documentation />
           </section>
-          <section id="playground" className="py-16 bg-background">
+          <section id="playground" className="py-16 bg-muted/50">
             <ApiPlayground />
           </section>
         </main>
