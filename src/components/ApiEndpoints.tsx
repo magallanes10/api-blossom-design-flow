@@ -1,10 +1,7 @@
 
-import { Clipboard, Code, AlertCircle, CheckCircle, XCircle } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 
 interface Endpoint {
@@ -14,7 +11,6 @@ interface Endpoint {
   method: "GET" | "POST" | "PUT" | "DELETE";
   path: string;
   active: boolean;
-  responseExample: string;
 }
 
 const endpoints: Endpoint[] = [
@@ -25,20 +21,6 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/api/users",
     active: true,
-    responseExample: `[
-  {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "admin"
-  },
-  {
-    "id": 2,
-    "name": "Jane Smith",
-    "email": "jane@example.com",
-    "role": "user"
-  }
-]`,
   },
   {
     id: "get-user",
@@ -47,12 +29,6 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/api/users/:id",
     active: true,
-    responseExample: `{
-  "id": 1,
-  "name": "John Doe",
-  "email": "john@example.com",
-  "role": "admin"
-}`,
   },
   {
     id: "create-user",
@@ -61,12 +37,6 @@ const endpoints: Endpoint[] = [
     method: "POST",
     path: "/api/users",
     active: true,
-    responseExample: `{
-  "id": 4,
-  "name": "New User",
-  "email": "newuser@example.com",
-  "role": "user"
-}`,
   },
   {
     id: "update-user",
@@ -75,12 +45,6 @@ const endpoints: Endpoint[] = [
     method: "PUT",
     path: "/api/users/:id",
     active: true,
-    responseExample: `{
-  "id": 1,
-  "name": "Updated Name",
-  "email": "updated@example.com",
-  "role": "admin"
-}`,
   },
   {
     id: "delete-user",
@@ -89,46 +53,8 @@ const endpoints: Endpoint[] = [
     method: "DELETE",
     path: "/api/users/:id",
     active: true,
-    responseExample: `{
-  "id": 1,
-  "name": "John Doe",
-  "email": "john@example.com",
-  "role": "admin"
-}`,
   }
 ];
-
-const CodeBlock = ({ code, language }: { code: string; language: string }) => {
-  const [copied, setCopied] = useState(false);
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    toast({
-      title: "Code copied to clipboard",
-      description: "You can now paste it into your project.",
-      duration: 3000,
-    });
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="relative">
-      <button
-        onClick={copyToClipboard}
-        className="copy-button"
-        aria-label="Copy code"
-      >
-        {copied ? (
-          <span className="text-green-400">Copied!</span>
-        ) : (
-          <Clipboard className="h-4 w-4" />
-        )}
-      </button>
-      <pre className="code-block">{code}</pre>
-    </div>
-  );
-};
 
 const EndpointCard = ({ endpoint }: { endpoint: Endpoint }) => {
   return (
@@ -163,18 +89,6 @@ const EndpointCard = ({ endpoint }: { endpoint: Endpoint }) => {
           </span>
         </div>
       </div>
-
-      <Tabs defaultValue="response" className="w-full">
-        <TabsList>
-          <TabsTrigger value="response">
-            <AlertCircle className="h-4 w-4 mr-2" />
-            Response Example
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="response" className="mt-4">
-          <CodeBlock code={endpoint.responseExample} language="json" />
-        </TabsContent>
-      </Tabs>
     </Card>
   );
 };

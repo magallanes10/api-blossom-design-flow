@@ -79,6 +79,7 @@ const ApiMonitoring = () => {
   const [responseTimes, setResponseTimes] = useState<ResponseTimes | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
 
   // Function to fetch all monitoring data
   const fetchMonitoringData = async () => {
@@ -133,11 +134,7 @@ const ApiMonitoring = () => {
       setResponseTimes(responseTimeData);
       setLastUpdated(new Date());
       
-      toast({
-        title: "Data refreshed",
-        description: "Monitoring data has been updated.",
-        duration: 3000,
-      });
+      // Removed toast notification on data refresh
     } catch (error) {
       console.error("Error fetching monitoring data:", error);
       toast({
@@ -155,38 +152,41 @@ const ApiMonitoring = () => {
   useEffect(() => {
     fetchMonitoringData();
     
-    // Simulate real-time updates every 10 seconds
-    const interval = setInterval(() => {
-      // In a real app, this would be WebSocket data
-      // For demo, we'll just update with slightly modified data
-      
-      if (apiStatus) {
-        const updatedEndpoints = apiStatus.endpoints.map(endpoint => ({
-          ...endpoint,
-          responseTime: endpoint.responseTime + (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 10)
-        }));
-        
-        setApiStatus({
-          ...apiStatus,
-          endpoints: updatedEndpoints,
-          timestamp: new Date().toISOString()
-        });
-      }
-      
-      if (responseTimes) {
-        const newAvg = responseTimes.average + (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 5);
-        setResponseTimes({
-          ...responseTimes,
-          average: newAvg,
-          timestamp: new Date().toISOString()
-        });
-      }
-      
-      setLastUpdated(new Date());
-    }, 10000);
+    // Only set up interval if autoRefresh is enabled
+    let interval: number | undefined;
     
-    return () => clearInterval(interval);
-  }, [apiStatus, responseTimes]);
+    if (autoRefresh) {
+      interval = setInterval(() => {
+        if (apiStatus) {
+          const updatedEndpoints = apiStatus.endpoints.map(endpoint => ({
+            ...endpoint,
+            responseTime: endpoint.responseTime + (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 10)
+          }));
+          
+          setApiStatus({
+            ...apiStatus,
+            endpoints: updatedEndpoints,
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        if (responseTimes) {
+          const newAvg = responseTimes.average + (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 5);
+          setResponseTimes({
+            ...responseTimes,
+            average: newAvg,
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        setLastUpdated(new Date());
+      }, 10000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [apiStatus, responseTimes, autoRefresh]);
 
   // Method colors for charts
   const methodColors = {
@@ -230,6 +230,13 @@ const ApiMonitoring = () => {
                 <RefreshCw className="h-4 w-4" />
               )}
               <span className="ml-2">Refresh</span>
+            </Button>
+            <Button
+              variant={autoRefresh ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAutoRefresh(!autoRefresh)}
+            >
+              <span className="ml-2">{autoRefresh ? "Auto Refresh: On" : "Auto Refresh: Off"}</span>
             </Button>
           </div>
         </div>
