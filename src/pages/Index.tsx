@@ -29,14 +29,13 @@ const Index = () => {
         <Navbar />
         <main className="flex-grow">
           <Hero />
-          {/* Added spacing between sections with clear separation */}
-          <section className="py-12 bg-background">
+          <section id="endpoints" className="py-16 bg-background">
             <ApiEndpoints />
           </section>
-          <section className="py-12 bg-muted">
+          <section id="documentation" className="py-16 bg-muted">
             <Documentation />
           </section>
-          <section className="py-12 bg-background">
+          <section id="playground" className="py-16 bg-background">
             <ApiPlayground />
           </section>
         </main>

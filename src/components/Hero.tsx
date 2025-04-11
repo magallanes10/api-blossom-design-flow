@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 
 const Hero = () => {
   return (
-    <div id="intro" className="relative overflow-hidden bg-background">
-      {/* Decorative elements with improved positioning to avoid overlaps */}
-      <div className="hidden sm:block sm:absolute sm:inset-0 sm:opacity-30 dark:sm:opacity-20 pointer-events-none z-0">
+    <div id="intro" className="relative overflow-hidden bg-background pt-16 pb-8">
+      {/* Decorative elements with improved positioning */}
+      <div className="hidden sm:block sm:absolute sm:inset-0 sm:opacity-20 dark:sm:opacity-10 pointer-events-none z-0">
         <svg
           className="absolute left-0 top-0 h-full w-full"
           viewBox="0 0 800 800"
@@ -44,7 +44,7 @@ const Hero = () => {
         </svg>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative z-10">
         <div className="text-center">
           <h1 className="text-4xl tracking-tight font-extrabold text-foreground sm:text-5xl md:text-6xl xl:text-7xl animate-fade-in">
             <span className="block">Beautiful REST API</span>
@@ -71,8 +71,8 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* API Stats with improved spacing and z-index */}
-      <div className="bg-muted py-12 animate-fade-in relative z-10" style={{ animationDelay: "0.3s" }}>
+      {/* API Stats with improved spacing */}
+      <div className="bg-muted py-10 mt-12 animate-fade-in relative z-10" style={{ animationDelay: "0.3s" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div className="text-center">
