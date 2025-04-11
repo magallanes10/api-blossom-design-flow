@@ -1,10 +1,11 @@
 
-import { Clipboard, Code, AlertCircle } from "lucide-react";
+import { Clipboard, Code, AlertCircle, CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface Endpoint {
   id: string;
@@ -12,7 +13,7 @@ interface Endpoint {
   description: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
   path: string;
-  requestExample: string;
+  active: boolean;
   responseExample: string;
 }
 
@@ -23,9 +24,7 @@ const endpoints: Endpoint[] = [
     description: "Retrieve a list of all users in the system.",
     method: "GET",
     path: "/api/users",
-    requestExample: `fetch('http://localhost:3001/api/users')
-  .then(response => response.json())
-  .then(data => console.log(data));`,
+    active: true,
     responseExample: `[
   {
     "id": 1,
@@ -47,9 +46,7 @@ const endpoints: Endpoint[] = [
     description: "Retrieve a specific user by their ID.",
     method: "GET",
     path: "/api/users/:id",
-    requestExample: `fetch('http://localhost:3001/api/users/1')
-  .then(response => response.json())
-  .then(data => console.log(data));`,
+    active: true,
     responseExample: `{
   "id": 1,
   "name": "John Doe",
@@ -63,19 +60,7 @@ const endpoints: Endpoint[] = [
     description: "Create a new user in the system.",
     method: "POST",
     path: "/api/users",
-    requestExample: `fetch('http://localhost:3001/api/users', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    name: 'New User',
-    email: 'newuser@example.com',
-    role: 'user'
-  })
-})
-  .then(response => response.json())
-  .then(data => console.log(data));`,
+    active: true,
     responseExample: `{
   "id": 4,
   "name": "New User",
@@ -89,18 +74,7 @@ const endpoints: Endpoint[] = [
     description: "Update an existing user's information.",
     method: "PUT",
     path: "/api/users/:id",
-    requestExample: `fetch('http://localhost:3001/api/users/1', {
-  method: 'PUT',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    name: 'Updated Name',
-    email: 'updated@example.com'
-  })
-})
-  .then(response => response.json())
-  .then(data => console.log(data));`,
+    active: true,
     responseExample: `{
   "id": 1,
   "name": "Updated Name",
@@ -114,11 +88,7 @@ const endpoints: Endpoint[] = [
     description: "Delete a user from the system.",
     method: "DELETE",
     path: "/api/users/:id",
-    requestExample: `fetch('http://localhost:3001/api/users/1', {
-  method: 'DELETE'
-})
-  .then(response => response.json())
-  .then(data => console.log(data));`,
+    active: true,
     responseExample: `{
   "id": 1,
   "name": "John Doe",
@@ -176,20 +146,31 @@ const EndpointCard = ({ endpoint }: { endpoint: Endpoint }) => {
         </div>
       </div>
 
-      <Tabs defaultValue="request" className="w-full">
+      <div className="flex items-center mb-4">
+        <div className="flex items-center">
+          <Badge variant={endpoint.active ? "success" : "destructive"} className="mr-2">
+            {endpoint.active ? "Active" : "Inactive"}
+          </Badge>
+          {endpoint.active ? (
+            <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
+          ) : (
+            <XCircle className="h-4 w-4 text-red-500 mr-1" />
+          )}
+          <span className="text-sm text-muted-foreground">
+            {endpoint.active 
+              ? "This endpoint is currently available" 
+              : "This endpoint is currently unavailable"}
+          </span>
+        </div>
+      </div>
+
+      <Tabs defaultValue="response" className="w-full">
         <TabsList>
-          <TabsTrigger value="request">
-            <Code className="h-4 w-4 mr-2" />
-            Request
-          </TabsTrigger>
           <TabsTrigger value="response">
             <AlertCircle className="h-4 w-4 mr-2" />
-            Response
+            Response Example
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="request" className="mt-4">
-          <CodeBlock code={endpoint.requestExample} language="javascript" />
-        </TabsContent>
         <TabsContent value="response" className="mt-4">
           <CodeBlock code={endpoint.responseExample} language="json" />
         </TabsContent>
