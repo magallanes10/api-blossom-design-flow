@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Bar, Line, Pie } from "recharts";
 import { 
@@ -153,7 +152,7 @@ const ApiMonitoring = () => {
     fetchMonitoringData();
     
     // Only set up interval if autoRefresh is enabled
-    let interval: number | undefined;
+    let interval: NodeJS.Timeout | undefined;
     
     if (autoRefresh) {
       interval = setInterval(() => {
