@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Bar, Line, Pie } from "recharts";
 import { 
@@ -41,6 +40,7 @@ interface ApiStatus {
   endpoints: EndpointStatus[];
   overallHealth: string;
   timestamp: string;
+  totalRequests: number;
 }
 
 interface MethodStat {
@@ -72,6 +72,7 @@ interface ResponseTimes {
   byEndpoint: ResponseTimeMetric[];
   period: string;
   timestamp: string;
+  totalRequests: number;
 }
 
 // Custom hook to fetch monitoring data
@@ -272,14 +273,14 @@ const ApiMonitoring = () => {
               <CardTitle className="text-lg font-medium">Total Requests</CardTitle>
             </CardHeader>
             <CardContent>
-              {methodStats ? (
+              {apiStatus ? (
                 <div className="flex flex-col items-center">
                   <div className="text-2xl font-bold mb-2">
                     <Activity className="h-6 w-6 inline mr-2" />
-                    {methodStats.totalRequests.toLocaleString()}
+                    {apiStatus.totalRequests.toLocaleString()}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {methodStats.period}
+                    Real-time count
                   </p>
                 </div>
               ) : (
@@ -466,7 +467,6 @@ const ApiMonitoring = () => {
           </Card>
         </div>
 
-        {/* Possibilities Section */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>Possibilities</CardTitle>

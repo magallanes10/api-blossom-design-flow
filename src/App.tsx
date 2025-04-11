@@ -10,12 +10,19 @@ import Monitoring from "./pages/Monitoring";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
-  // Move the QueryClient instantiation inside the component
-  const [queryClient] = useState(() => new QueryClient());
+  // Create a new QueryClient with retry configuration for better error handling
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 2,
+        refetchOnWindowFocus: false,
+      },
+    },
+  }));
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider delayDuration={0}>
+      <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
